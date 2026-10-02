@@ -1,14 +1,14 @@
-# Use OpenJDK base image
-FROM eclipse-temurin:21-jdk-alpine
-
-# Set the working directory
+# Этап 1: Сборка проекта с помощью Maven
+FROM maven:3.9-eclipse-temurin-21-alpine AS build
 WORKDIR /app
+COPY pom.xml .
+RUN mvn dependency:go-offline
+COPY src ./src
+RUN mvn clean package -DskipTests
 
-# Copy the JAR file into the container
-COPY target/retail-order-system-1.0.0.jar /app/app.jar
-
-# Expose the port the app will run on
+# Этап 2: Запуск приложения
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8080
-
-# Run the application
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
